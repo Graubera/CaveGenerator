@@ -8,9 +8,8 @@ public class MapGenerator : MonoBehaviour
     public int height;    
     public string seed;
     public bool useRandomSeed;
-
-    [Range(0, 100)]
     public int smoothMap;
+
     [Range(0, 100)]
     public int randomFillPercentage;
 
