@@ -8,8 +8,9 @@ public class MapGenerator : MonoBehaviour
     public int height;    
     public string seed;
     public bool useRandomSeed;
-    public int smoothMap;
 
+    [Range(0, 100)]
+    public int smoothMap;
     [Range(0, 100)]
     public int randomFillPercentage;
 
@@ -33,6 +34,9 @@ public class MapGenerator : MonoBehaviour
         for (int i = 1; i < smoothMap; i++) {
             SmoothMap();
         }
+
+        MeshGenerator meshGenerator = GetComponent<MeshGenerator>();
+        meshGenerator.GenerateMesh(map, 1);
     }
 
     void RandomFillMap()
@@ -101,6 +105,7 @@ public class MapGenerator : MonoBehaviour
     }
     void OnDrawGizmos ()
     {
+        /*
         if (map != null)
         {
             for (int x = 0; x < width; x++)
@@ -108,12 +113,13 @@ public class MapGenerator : MonoBehaviour
                 for (int y = 0; y < height; y++)
                 {
                     Gizmos.color = (map[x, y] == 1) ? Color.black : Color.white;
-                    Vector3 pos = new Vector3(-width / 2 + x + .5f, 0, -height / 2 + y + .5f);
-                    //Vector3 pos = new Vector3(x, 0, y);
+                    //Vector3 pos = new Vector3(-width / 2 + x + .5f, 0, -height / 2 + y + .5f);
+                    Vector3 pos = new Vector3(x, 0, y);
                     Gizmos.DrawCube(pos, Vector3.one);
                 }
             }
         }
+        */
     }
 }
 	
