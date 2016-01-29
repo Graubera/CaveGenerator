@@ -94,11 +94,36 @@ public class MapGenerator : MonoBehaviour
             }
         }
 
+        survivingRooms.Sort();
+        if(survivingRooms.Count >= 0)
+        {
+            survivingRooms[0].isMain = true;
+            survivingRooms[0].isAccessible = true;
+        }        
+
         ConnectClosestRooms(survivingRooms);
     }
 
-    void ConnectClosestRooms(List<Room> allRooms)
+    void ConnectClosestRooms(List<Room> allRooms, bool forceAccessibilityFromMainRoom = false)
     {
+        List<Room> roomListA = new List<Room>();
+        List<Room> roomListB = new List<Room>();
+
+        if(forceAccessibilityFromMainRoom)
+        {
+            foreach(Room room in allRooms)
+            {
+                if (room.isAccessible)
+                    roomListB.Add(room);
+                else
+                    roomListA.Add(room);
+            }
+        }
+        else
+        {
+            roomListA = allRooms;
+            roomListB = allRooms;
+        }
         int bestDIstance = 0;
         Coord bestTileA = new Coord();
         Coord bestTileB = new Coord();
@@ -106,19 +131,19 @@ public class MapGenerator : MonoBehaviour
         Room bestRoomB = new Room();
         bool possibleConnectedFound = false;
 
-        foreach (Room roomA in allRooms)
+        foreach (Room roomA in roomListA)
         {
-            possibleConnectedFound = false;
-            foreach (Room roomB in allRooms)
+            if (!forceAccessibilityFromMainRoom)
             {
-                if (roomA == roomB)
+                possibleConnectedFound = false;
+                if (roomA.connectedRooms.Count > 0)
                     continue;
+            }
 
-                if (roomA.IsConnected(roomB))
-                {
-                    possibleConnectedFound = false;
-                    break;
-                }
+            foreach (Room roomB in roomListB)
+            {
+                if (roomA == roomB || roomA.IsConnected(roomB))
+                    continue;
 
                 for (int tileIndexA = 0; tileIndexA < roomA.edgeTiles.Count; tileIndexA ++)
                 {
@@ -142,11 +167,22 @@ public class MapGenerator : MonoBehaviour
                 }
             }
 
-            if (possibleConnectedFound)
+            if (possibleConnectedFound && !forceAccessibilityFromMainRoom)
             {
                 CreatePassage(bestRoomA, bestRoomB, bestTileA, bestTileB);
             }
 
+        }
+
+        if (possibleConnectedFound && forceAccessibilityFromMainRoom)
+        {
+            CreatePassage(bestRoomA, bestRoomB, bestTileA, bestTileB);
+            ConnectClosestRooms(allRooms, true);
+        }
+
+        if (!forceAccessibilityFromMainRoom)
+        {
+            ConnectClosestRooms(allRooms, true);
         }
 
     }
@@ -303,13 +339,14 @@ public class MapGenerator : MonoBehaviour
         }
     }
     
-    class Room
+    class Room : IComparable<Room>
     {
         public List<Coord> tiles;
         public List<Coord> edgeTiles;
         public List<Room> connectedRooms;
         public int roomSize;
-
+        public bool isAccessible;
+        public bool isMain;
         public Room()
         {
 
@@ -339,8 +376,24 @@ public class MapGenerator : MonoBehaviour
             }
         }
 
+        public void SetAccessibleFromMainRoom()
+        {
+            if(!isAccessible)
+            {
+                isAccessible = true;
+                foreach(Room connectedRoom in connectedRooms)
+                {
+                    connectedRoom.SetAccessibleFromMainRoom();
+                }
+            }
+        }
         public static void ConnectRooms(Room roomA, Room roomB)
         {
+            if(roomA.isAccessible)
+                roomB.SetAccessibleFromMainRoom();
+            else if(roomB.isAccessible)
+                roomA.SetAccessibleFromMainRoom();
+
             roomA.connectedRooms.Add(roomB);
             roomB.connectedRooms.Add(roomA);
         }
@@ -350,6 +403,10 @@ public class MapGenerator : MonoBehaviour
             return connectedRooms.Contains(otherRoom);
         }
 
+        public int CompareTo(Room otherRoom)
+        {
+            return otherRoom.roomSize.CompareTo(roomSize);
+        }
     }
 }
 	
